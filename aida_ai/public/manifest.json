@@ -1,0 +1,17 @@
+{
+  "name": "Aida AI",
+  "app_name": "aida_ai",
+  "version": "0.0.1",
+  "description": "Lead Intelligence Agent for ERPNext",
+  "author": "Aida AI Team",
+  "website": "https://github.com/aida-ai/aida-ai",
+  "license": "MIT",
+  "app_color": "#3498db",
+  "app_icon": "fa fa-robot",
+  "modules": [
+    "Aida AI"
+  ],
+  "dependencies": [
+    "frappe"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "js/aida_ai.min.js": [
+    "js/app.js",
+    "js/aida_ai.bundle.js"
+  ],
+  "css/aida_ai.min.css": [
+    "css/aida_ai.bundle.css"
+  ]
+}

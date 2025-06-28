@@ -1,0 +1,233 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 00:00:00.000000",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "session_name",
+  "status",
+  "column_break_4",
+  "created_by",
+  "creation_date",
+  "section_break_7",
+  "erpnext_url",
+  "erpnext_username",
+  "erpnext_password",
+  "section_break_11",
+  "company_name",
+  "company_description",
+  "company_industry",
+  "column_break_15",
+  "company_website",
+  "value_proposition",
+  "offers",
+  "section_break_19",
+  "email_templates",
+  "section_break_21",
+  "total_leads",
+  "emails_sent",
+  "column_break_24",
+  "open_rate",
+  "response_rate"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "AIDA-SESS-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "session_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Session Name",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Active\nInactive\nArchived",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "creation_date",
+   "fieldtype": "Datetime",
+   "label": "Creation Date",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_7",
+   "fieldtype": "Section Break",
+   "label": "ERPNext Configuration"
+  },
+  {
+   "fieldname": "erpnext_url",
+   "fieldtype": "Data",
+   "label": "ERPNext URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "erpnext_username",
+   "fieldtype": "Data",
+   "label": "ERPNext Username",
+   "reqd": 1
+  },
+  {
+   "fieldname": "erpnext_password",
+   "fieldtype": "Password",
+   "label": "ERPNext Password",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_11",
+   "fieldtype": "Section Break",
+   "label": "Company Profile"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "label": "Company Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company_description",
+   "fieldtype": "Text",
+   "label": "Company Description"
+  },
+  {
+   "fieldname": "company_industry",
+   "fieldtype": "Data",
+   "label": "Industry"
+  },
+  {
+   "fieldname": "column_break_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company_website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "value_proposition",
+   "fieldtype": "Text",
+   "label": "Value Proposition"
+  },
+  {
+   "fieldname": "offers",
+   "fieldtype": "Text",
+   "label": "Services/Products"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_19",
+   "fieldtype": "Section Break",
+   "label": "Email Templates"
+  },
+  {
+   "fieldname": "email_templates",
+   "fieldtype": "Table",
+   "label": "Email Templates",
+   "options": "Aida AI Email Template"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_21",
+   "fieldtype": "Section Break",
+   "label": "Statistics"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_leads",
+   "fieldtype": "Int",
+   "label": "Total Leads",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "emails_sent",
+   "fieldtype": "Int",
+   "label": "Emails Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_24",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "open_rate",
+   "fieldtype": "Percent",
+   "label": "Open Rate",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "response_rate",
+   "fieldtype": "Percent",
+   "label": "Response Rate",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Aida AI",
+ "name": "Aida AI Session",
+ "naming_rule": "By "Naming Series" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

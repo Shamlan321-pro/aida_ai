@@ -1,0 +1,548 @@
+{% extends "templates/web.html" %}
+
+{% block title %}Aida AI - Lead Intelligence Dashboard{% endblock %}
+
+{% block head_include %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .loading {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="bg-gray-50 min-h-screen" x-data="aidaApp()">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-robot text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Aida AI</h1>
+                        <p class="text-sm opacity-90">Lead Intelligence Agent</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span x-show="currentSession" class="text-sm opacity-90" x-text="'Session: ' + (currentSession?.session_name || 'Unknown')"></span>
+                    <button @click="showSessionModal = true" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-plus mr-2"></i>New Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-8">
+        <!-- Session Selection -->
+        <div x-show="!currentSession" class="text-center py-12">
+            <i class="fas fa-robot text-6xl text-gray-400 mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Welcome to Aida AI</h2>
+            <p class="text-gray-600 mb-8">Create a new session to start generating leads and running outreach campaigns</p>
+            <button @click="showSessionModal = true" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                <i class="fas fa-plus mr-2"></i>Create Session
+            </button>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div x-show="currentSession">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Leads</p>
+                            <p class="text-3xl font-bold text-blue-600" x-text="stats.total_leads">0</p>
+                        </div>
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Emails Sent</p>
+                            <p class="text-3xl font-bold text-green-600" x-text="stats.emails_sent">0</p>
+                        </div>
+                        <i class="fas fa-envelope text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Open Rate</p>
+                            <p class="text-3xl font-bold text-yellow-600" x-text="(stats.open_rate * 100).toFixed(1) + '%'">0%</p>
+                        </div>
+                        <i class="fas fa-eye text-yellow-600 text-2xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Response Rate</p>
+                            <p class="text-3xl font-bold text-purple-600" x-text="(stats.response_rate * 100).toFixed(1) + '%'">0%</p>
+                        </div>
+                        <i class="fas fa-reply text-purple-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Lead Generation -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-search mr-2 text-blue-600"></i>
+                        Lead Generation
+                    </h3>
+                    <div class="space-y-4">
+                        <textarea 
+                            x-model="leadQuery" 
+                            placeholder="e.g., Find 10 software companies in San Francisco"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            rows="3"></textarea>
+                        <div class="flex space-x-2">
+                            <button @click="generateLeads()" 
+                                    :disabled="loading || !leadQuery.trim()"
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold transition-all">
+                                <i class="fas fa-search mr-2" :class="{'loading': loading}"></i>
+                                <span x-text="loading ? 'Generating...' : 'Generate Leads'"></span>
+                            </button>
+                            <button @click="showSampleQueries('lead_generation')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                <i class="fas fa-lightbulb"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outreach Campaign -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-paper-plane mr-2 text-green-600"></i>
+                        Outreach Campaign
+                    </h3>
+                    <div class="space-y-4">
+                        <textarea 
+                            x-model="outreachQuery" 
+                            placeholder="e.g., Send outreach emails to 5 recent leads in tech industry"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            rows="3"></textarea>
+                        <select x-model="selectedTemplate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                            <option value="">Select Email Template (Optional)</option>
+                            <template x-for="template in emailTemplates" :key="template.type">
+                                <option :value="template.type" x-text="template.name"></option>
+                            </template>
+                        </select>
+                        <div class="flex space-x-2">
+                            <button @click="runOutreach()" 
+                                    :disabled="loading || !outreachQuery.trim()"
+                                    class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold transition-all">
+                                <i class="fas fa-paper-plane mr-2" :class="{'loading': loading}"></i>
+                                <span x-text="loading ? 'Running Campaign...' : 'Run Campaign'"></span>
+                            </button>
+                            <button @click="showSampleQueries('outreach')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                <i class="fas fa-lightbulb"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div x-show="results.length > 0" class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
+                    Recent Results
+                </h3>
+                <div class="space-y-4">
+                    <template x-for="result in results.slice(0, 5)" :key="result.id">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-semibold" x-text="result.type"></span>
+                                <span class="text-sm text-gray-500" x-text="result.timestamp"></span>
+                            </div>
+                            <p class="text-gray-700 mb-2" x-text="result.query"></p>
+                            <div class="text-sm text-gray-600" x-html="result.summary"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Creation Modal -->
+    <div x-show="showSessionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-transition>
+        <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6">Create New Session</h2>
+            
+            <!-- Company Profile -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-3">Company Profile</h3>
+                <div class="grid grid-cols-1 gap-4">
+                    <input x-model="sessionForm.company_name" type="text" placeholder="Company Name" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <input x-model="sessionForm.company_industry" type="text" placeholder="Industry" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <input x-model="sessionForm.company_website" type="url" placeholder="Website (optional)" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <textarea x-model="sessionForm.company_description" placeholder="Company Description" class="w-full p-3 border border-gray-300 rounded-lg" rows="3"></textarea>
+                    <textarea x-model="sessionForm.value_proposition" placeholder="Value Proposition" class="w-full p-3 border border-gray-300 rounded-lg" rows="2"></textarea>
+                    <input x-model="sessionForm.offers" type="text" placeholder="Services/Products (comma-separated)" class="w-full p-3 border border-gray-300 rounded-lg">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button @click="showSessionModal = false" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button @click="createSession()" 
+                        :disabled="loading"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-semibold">
+                    <span x-text="loading ? 'Creating...' : 'Create Session'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Queries Modal -->
+    <div x-show="showSamplesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-transition>
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Sample Queries</h3>
+            <div class="space-y-2">
+                <template x-for="query in sampleQueries" :key="query">
+                    <button @click="useSampleQuery(query)" class="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <span x-text="query"></span>
+                    </button>
+                </template>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button @click="showSamplesModal = false" class="px-4 py-2 bg-gray-600 text-white rounded-lg">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function aidaApp() {
+    return {
+        // State
+        currentSession: null,
+        sessions: {{ sessions | tojson }},
+        stats: {
+            total_leads: 0,
+            leads_this_month: 0,
+            emails_sent: 0,
+            open_rate: 0,
+            response_rate: 0,
+            active_campaigns: 0
+        },
+        results: [],
+        loading: false,
+        showSessionModal: false,
+        showSamplesModal: false,
+        
+        // Forms
+        leadQuery: '',
+        outreachQuery: '',
+        selectedTemplate: '',
+        emailTemplates: [],
+        sampleQueries: [],
+        currentSampleType: '',
+        
+        sessionForm: {
+            company_name: '',
+            company_industry: '',
+            company_website: '',
+            company_description: '',
+            value_proposition: '',
+            offers: ''
+        },
+
+        // API Base URL
+        apiBase: '{{ api_base }}',
+        frappeApiBase: '/api/method/aida_ai.aida_ai.www.aida-ai',
+
+        // Initialize
+        async init() {
+            if (this.sessions.length > 0 && !this.currentSession) {
+                await this.selectSession(this.sessions[0].name);
+            }
+            await this.loadSampleQueries();
+        },
+
+        // API Methods
+        async frappeCall(method, data = {}) {
+            try {
+                const response = await fetch(`${this.frappeApiBase}.${method}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Frappe-CSRF-Token': frappe.csrf_token
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                
+                const result = await response.json();
+                if (result.message && result.message.success === false) {
+                    throw new Error(result.message.message || 'Operation failed');
+                }
+                
+                return result.message;
+            } catch (error) {
+                console.error('Frappe API Error:', error);
+                frappe.msgprint('Error: ' + error.message);
+                throw error;
+            }
+        },
+
+        async apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${this.apiBase}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'API request failed');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                frappe.msgprint('Error: ' + error.message);
+                throw error;
+            }
+        },
+
+        async selectSession(sessionId) {
+            try {
+                const sessionData = await this.frappeCall('get_session_details', { session_id: sessionId });
+                this.currentSession = sessionData.data;
+                this.emailTemplates = sessionData.data.email_templates || [];
+                this.stats = sessionData.data.statistics || this.stats;
+            } catch (error) {
+                console.error('Failed to select session:', error);
+            }
+        },
+
+        async loadSampleQueries() {
+            try {
+                const response = await this.apiCall('/demo/sample-queries');
+                this.allSampleQueries = response.data;
+            } catch (error) {
+                console.error('Failed to load sample queries:', error);
+                // Fallback sample queries
+                this.allSampleQueries = {
+                    lead_generation: [
+                        "Find 10 software companies in San Francisco",
+                        "Get 5 marketing agencies in New York",
+                        "Search for e-commerce businesses in Los Angeles"
+                    ],
+                    outreach: [
+                        "Send meeting request emails to 5 recent leads",
+                        "Run product demo campaign for tech companies",
+                        "Follow up with leads from last week"
+                    ]
+                };
+            }
+        },
+
+        async createSession() {
+            if (!this.sessionForm.company_name) {
+                frappe.msgprint('Please fill in the company name');
+                return;
+            }
+
+            this.loading = true;
+            try {
+                // Get current ERPNext site URL and user credentials
+                const currentSite = window.location.origin;
+                const currentUser = frappe.session.user;
+                
+                const sessionData = {
+                    erpnext_config: {
+                        url: currentSite,
+                        username: currentUser,
+                        password: 'auto' // Will use current session
+                    },
+                    company_profile: {
+                        name: this.sessionForm.company_name,
+                        description: this.sessionForm.company_description,
+                        industry: this.sessionForm.company_industry,
+                        website: this.sessionForm.company_website,
+                        offers: this.sessionForm.offers.split(',').map(s => s.trim()).filter(s => s),
+                        value_proposition: this.sessionForm.value_proposition
+                    },
+                    email_templates: [
+                        {
+                            name: "Meeting Request",
+                            type: "meeting",
+                            subject: "Quick chat about {company_name}?",
+                            body: "Hi {contact_name},\n\nI noticed {company_name} is in the {industry} space. We help companies like yours {value_proposition}.\n\nWould you be open to a brief 15-minute call to discuss how we can help {company_name}?\n\nBest regards,\n{sender_name}",
+                            tone: "professional"
+                        },
+                        {
+                            name: "Product Demo",
+                            type: "product",
+                            subject: "See how {our_company} can help {company_name}",
+                            body: "Hello {contact_name},\n\nI hope this email finds you well. I'm reaching out because {company_name} seems like a perfect fit for our {main_service}.\n\n{value_proposition}\n\nWould you be interested in a quick demo to see how we can help {company_name}?\n\nBest,\n{sender_name}",
+                            tone: "friendly"
+                        }
+                    ]
+                };
+
+                const response = await this.frappeCall('create_session', { session_data: sessionData });
+                
+                await this.selectSession(response.session_id);
+                
+                // Refresh sessions list
+                location.reload();
+                
+                this.showSessionModal = false;
+                this.resetSessionForm();
+                
+                frappe.msgprint('Session created successfully!');
+            } catch (error) {
+                console.error('Failed to create session:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async generateLeads() {
+            if (!this.currentSession || !this.leadQuery.trim()) return;
+
+            this.loading = true;
+            try {
+                const response = await this.apiCall(`/sessions/${this.currentSession.session_id}/generate-leads`, {
+                    method: 'POST',
+                    body: JSON.stringify({ query: this.leadQuery })
+                });
+
+                this.addResult('Lead Generation', this.leadQuery, response.data);
+                this.leadQuery = '';
+                
+                // Update session stats in Frappe
+                await this.frappeCall('update_session_stats', {
+                    session_id: this.currentSession.session_id,
+                    leads_generated: 1
+                });
+                
+                await this.selectSession(this.currentSession.session_id);
+            } catch (error) {
+                console.error('Failed to generate leads:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async runOutreach() {
+            if (!this.currentSession || !this.outreachQuery.trim()) return;
+
+            this.loading = true;
+            try {
+                const requestData = { query: this.outreachQuery };
+                if (this.selectedTemplate) {
+                    requestData.template_type = this.selectedTemplate;
+                }
+
+                const response = await this.apiCall(`/sessions/${this.currentSession.session_id}/run-outreach`, {
+                    method: 'POST',
+                    body: JSON.stringify(requestData)
+                });
+
+                this.addResult('Outreach Campaign', this.outreachQuery, response.data);
+                this.outreachQuery = '';
+                this.selectedTemplate = '';
+                
+                // Update session stats in Frappe
+                await this.frappeCall('update_session_stats', {
+                    session_id: this.currentSession.session_id,
+                    emails_sent: 1
+                });
+                
+                await this.selectSession(this.currentSession.session_id);
+            } catch (error) {
+                console.error('Failed to run outreach:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        showSampleQueries(type) {
+            this.currentSampleType = type;
+            this.sampleQueries = this.allSampleQueries?.[type] || [];
+            this.showSamplesModal = true;
+        },
+
+        useSampleQuery(query) {
+            if (this.currentSampleType === 'lead_generation') {
+                this.leadQuery = query;
+            } else if (this.currentSampleType === 'outreach') {
+                this.outreachQuery = query;
+            }
+            this.showSamplesModal = false;
+        },
+
+        addResult(type, query, data) {
+            const result = {
+                id: Date.now(),
+                type: type,
+                query: query,
+                timestamp: new Date().toLocaleString(),
+                summary: this.formatResultSummary(data)
+            };
+            this.results.unshift(result);
+        },
+
+        formatResultSummary(data) {
+            if (typeof data === 'string') {
+                return data;
+            }
+            if (data && typeof data === 'object') {
+                return `<pre class="text-xs bg-gray-100 p-2 rounded">${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            return 'Operation completed successfully';
+        },
+
+        resetSessionForm() {
+            this.sessionForm = {
+                company_name: '',
+                company_industry: '',
+                company_website: '',
+                company_description: '',
+                value_proposition: '',
+                offers: ''
+            };
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1 @@
+# Templates package for Aida AI Email Template doctype 

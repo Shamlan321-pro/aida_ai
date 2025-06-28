@@ -1,0 +1,9 @@
+frappe
+requests
+langchain
+langchain-google-genai
+googlemaps
+pydantic
+fastapi
+uvicorn
+python-dotenv
